@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // The `/api/products` endpoint
-router.use('/api/products', router);
+// router.use('/api/products', router);
 
 // get all products
 router.get('/', (req, res) => {
@@ -13,30 +13,18 @@ router.get('/', (req, res) => {
       'id',
       'product_name',
       'price',
-      'stock',
-      'category_id'
+      'stock'
     ],
     include: [
-      // {
-      //   model: Category,
-      //   attribute: ['category_name']
-      // },
       {
-        model: ProductTag,
-        attribute: ['product_id'],
-        include: {
-          model: Product,
-          attribute: ['product_name']
-        }
+        model: Category,
+        attributes: ['category_name']
+      },
+      {
+        model: Tag,
+        through: ProductTag,
+        attributes: ['tag_name']
       }
-      // {
-      //   model: ProductTag,
-      //   attribute: ['tag_id'],
-      //   include: {
-      //     model: Tag,
-      //     attribute: ['tag_name']
-      //   }
-      // }
     ]
   })
     .then(dbProductData => res.json(dbProductData))
@@ -50,6 +38,33 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+  Product.findOne({
+    where: {
+      id: req.params.id
+    },
+    attributes: [
+      'id',
+      'product_name',
+      'price',
+      'stock'
+    ],
+    include: [
+      {
+        model: Category,
+        attributes: ['category_name']
+      },
+      {
+        model: Tag,
+        through: ProductTag,
+        attributes: ['tag_name'],
+      }
+    ]
+  })
+    .then(dbProductData => res.json(dbProductData))
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
 });
 
 // create new product
@@ -72,7 +87,7 @@ router.post('/', (req, res) => {
             tag_id,
           };
         });
-        return ProductTag.bulkCreate(productTagIdArr);
+        ProductTag.bulkCreate(productTagIdArr);
       }
       // if no product tags, just respond
       res.status(200).json(product);
@@ -126,8 +141,37 @@ router.put('/:id', (req, res) => {
     });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   // delete one product by its `id` value
+  try {
+    const dbProductData = await Product.destroy({
+      where: {
+        id: req.params.id
+      },
+      attributes: [
+        'id',
+        'product_name',
+        'price',
+        'stock'
+      ],
+      include: [
+        {
+          model: Category,
+          attributes: ['category_name']
+        },
+        {
+          model: Tag,
+          through: ProductTag,
+          attributes: ['tag_name'],
+        }
+      ]
+    })
+    res.json(dbProductData);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+
 });
 
 module.exports = router;
