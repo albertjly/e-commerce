@@ -56,7 +56,7 @@ router.get('/:id', (req, res) => {
       {
         model: Tag,
         through: ProductTag,
-        attributes: ['tag_name'],
+        attributes: ['tag_name']
       }
     ]
   })
@@ -162,7 +162,7 @@ router.delete('/:id', async (req, res) => {
         {
           model: Tag,
           through: ProductTag,
-          attributes: ['tag_name'],
+          attributes: ['tag_name']
         }
       ]
     })
